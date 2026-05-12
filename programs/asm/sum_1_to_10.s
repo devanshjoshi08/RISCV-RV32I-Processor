@@ -11,4 +11,4 @@ loop:
         sw   x1, 0(x0)       # store to mem[0]
         addi x5, x1, 0       # copy to x5
 end:
-        jal  x0, en
+        jal  x0, end
