@@ -1,7 +1,3 @@
-// Bubble Sort Demo
-// Sorts an array of integers, outputs results over UART,
-// and displays the sorted count on the LEDs.
-
 #include "mmio.h"
 
 void bubble_sort(int *arr, int n) {
@@ -38,9 +34,7 @@ int main(void) {
     }
     uart_puts("\r\n");
 
-    // Display sorted element count on LEDs
     LED_REG = n;
-
     uart_puts("Done. LED = ");
     uart_put_dec(n);
     uart_puts("\r\n");
