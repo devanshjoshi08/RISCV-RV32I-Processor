@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module rv32i_pipeline_t;
+module rv32i_pipeline_tb;
 
   logic clk, rst_n;
   logic [31:0] debug_pc, debug_instr, debug_alu_result;
