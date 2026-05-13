@@ -1,10 +1,14 @@
 module fpga_top (
   input logic clk,
-  input logic rst_n,
+  input logic rst_btn,      // basys 3 buttons are active-high
   input logic [15:0] switches,
   output logic [15:0] leds,
   output logic uart_tx
 );
+
+  // invert the button since everything internally uses active-low reset
+  logic rst_n;
+  assign rst_n = ~rst_btn;
 
   // 2-stage reset synchronizer
   logic rst_sync_0, rst_sync_1;
