@@ -1,8 +1,8 @@
 # RISC-V RV32I Pipelined Processor
 
-5-stage pipelined RISC-V processor in SystemVerilog targeting the Basys 3 FPGA. Executes all 40 RV32I base integer instructions, handles data hazards through forwarding and stalling, predicts branches with a 64-entry BHT, and includes a direct-mapped instruction cache. Synthesizes at ~91 MHz on the Artix-7 and runs C programs compiled with a standard RISC-V GCC toolchain, printing output over UART to a serial terminal.
+5-stage pipelined RISC-V processor in SystemVerilog targeting the Basys 3 FPGA. Executes all 40 RV32I base integer instructions, handles data hazards through forwarding and stalling, predicts branches with a 64-entry BHT, and includes a direct-mapped instruction cache. Runs C programs compiled with a standard RISC-V GCC toolchain with UART serial output and LED display on the FPGA.
 
-Validated against the official [riscv-tests](https://github.com/riscv-software-src/riscv-tests) suite (37 RV32I tests). Deployed and tested on real hardware with LED output and 115200 baud serial.
+Validated against the official [riscv-tests](https://github.com/riscv-software-src/riscv-tests) suite (37 RV32I tests). Deployed and tested on real hardware.
 
 **Author:** Devansh Joshi
 
@@ -10,7 +10,7 @@ Validated against the official [riscv-tests](https://github.com/riscv-software-s
 
 After place-and-route with the fibonacci demo program embedded:
 
-- **~91 MHz** (WNS = -0.938 ns at 100 MHz constraint, 14 logic levels on the critical path through forwarding -> branch comparison -> PC next)
+- **~91 MHz** (WNS = -0.938 ns at 100 MHz constraint, critical path through forwarding mux -> branch comparator -> PC next)
 - **~2,500 LUTs** out of 20,800
 - **~3,300 flip-flops** out of 41,600
 - **512 LUTRAMs** for the data memory
@@ -48,16 +48,15 @@ For load-use hazards (where the instruction right after a load needs the loaded 
 
 Loads and stores hit the memory-mapped I/O controller, which routes accesses based on the address:
 
-| Address | What |
+| Address | Peripheral |
 |---|---|
-| `0x000` - `0x3FF` | Instruction ROM (read-only, for .rodata like strings) |
-| `0x400` - `0xFFF` | Data RAM (read/write, stack and heap) |
+| `0x00000000` - `0x00000FFF` | Data RAM |
 | `0x10000000` | LEDs |
 | `0x10000004` | Switches |
 | `0x10000008` | UART TX data |
 | `0x1000000C` | UART TX busy flag |
 
-The lower 1KB of the address space is backed by the instruction ROM through a second read port, so load instructions can access string constants and other read-only data stored alongside the code. The upper portion is backed by DMEM for stack and writable data. The UART runs at 115200 baud, 8N1.
+The UART runs at 115200 baud, 8N1. Writing a byte to the UART data register kicks off a transmission.
 
 ### Writeback
 
@@ -73,8 +72,6 @@ The write-back mux picks between the ALU result, memory read data, the upper imm
 
 **Direct-mapped cache**: A set-associative cache would have better hit rates, but for the small programs running on this core, a direct-mapped cache with 64 lines covers the working set fine. It's already the most expensive module in the design.
 
-**Dual-port IMEM for .rodata access**: In a Harvard architecture, code and data memories are separate. String constants and other read-only data end up in the code ROM, but load instructions normally only read from data RAM. A second read port on the instruction ROM lets the MEM stage access .rodata without adding a separate memory or copying data at startup.
-
 ## Verification
 
 Three levels of testing:
@@ -89,8 +86,8 @@ The runner script (`tools/run_riscv_tests.sh`) automates all 37 tests and report
 
 The default program embedded in the instruction ROM computes 20 Fibonacci numbers. When programmed onto the Basys 3:
 
-- The serial terminal (115200 baud) shows each Fibonacci number as it's computed
-- The LEDs display the lower 16 bits of the current value
+- The serial terminal (115200 baud) outputs the computed values as they're calculated
+- The LEDs display the lower 16 bits of each Fibonacci number
 - After completion, the LEDs hold F(19) = 4181 = 0x1055 (LEDs 0, 2, 4, 6, 12 on)
 - Pressing the center button resets and reruns the program
 
@@ -141,7 +138,7 @@ bash tools/run_riscv_tests.sh ./riscv-tests
 rtl/
   pkg_riscv.sv                opcodes and type definitions
   pc.sv                       program counter
-  imem.sv                     instruction ROM (dual read port)
+  imem.sv                     instruction ROM
   regfile.sv                  register file with write-through bypass
   alu.sv                      arithmetic/logic unit
   imm_gen.sv                  immediate extraction
@@ -159,7 +156,7 @@ rtl/
   rv32i_top.sv                single-cycle version (for debug)
   rv32i_pipeline_top.sv       pipelined version (simulation)
   rv32i_pipeline_mmio_top.sv  pipelined version with MMIO (FPGA)
-  mmio.sv                     memory-mapped I/O with IMEM read port
+  mmio.sv                     memory-mapped I/O
   uart_tx.sv                  UART transmitter
   fpga_top.sv                 FPGA top wrapper
 
