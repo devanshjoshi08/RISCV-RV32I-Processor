@@ -1,3 +1,6 @@
+// runs on the rv32i processor on the basys 3.
+// sorts an array, prints before/after over UART, shows element count on LEDs.
+
 #include "mmio.h"
 
 void bubble_sort(int *arr, int n) {
@@ -34,6 +37,7 @@ int main(void) {
     }
     uart_puts("\r\n");
 
+    // show how many elements were sorted
     LED_REG = n;
     uart_puts("Done. LED = ");
     uart_put_dec(n);

@@ -1,3 +1,6 @@
+# first thing that runs on the processor.
+# sets up the stack so C functions work, then jumps to main.
+
 .section .text.init
 .global _start
 
