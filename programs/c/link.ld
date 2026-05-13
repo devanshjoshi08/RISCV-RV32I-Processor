@@ -1,19 +1,19 @@
 MEMORY
 {
-    IMEM (rx)  : ORIGIN = 0x00000000, LENGTH = 4K
-    DMEM (rwx) : ORIGIN = 0x00000000, LENGTH = 4K
+    ROM (rx)  : ORIGIN = 0x00000000, LENGTH = 4K
+    RAM (rwx) : ORIGIN = 0x00001000, LENGTH = 3K
 }
 
 SECTIONS
 {
-    .text : { *(.text.init) *(.text*) } > IMEM
-    .rodata : { *(.rodata*) } > DMEM
-    .data : { *(.data*) } > DMEM
+    .text : { *(.text.init) *(.text*) } > ROM
+    .rodata : { *(.rodata*) } > ROM
+    .data : { *(.data*) } > RAM
     .bss : {
         __bss_start = .;
         *(.bss*) *(COMMON)
         __bss_end = .;
-    } > DMEM
+    } > RAM
 
-    __stack_top = ORIGIN(DMEM) + LENGTH(DMEM);
+    __stack_top = ORIGIN(RAM) + LENGTH(RAM);
 }

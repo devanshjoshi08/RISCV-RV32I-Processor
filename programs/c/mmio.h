@@ -30,7 +30,13 @@ static inline void uart_put_dec(int val) {
     if (val == 0) { uart_putc('0'); return; }
     char buf[12];
     int i = 0;
-    while (val > 0) { buf[i++] = '0' + (val % 10); val /= 10; }
+    while (val > 0) {
+        // rv32i has no div/mod, so do it with subtraction
+        int q = 0, r = val;
+        while (r >= 10) { r -= 10; q++; }
+        buf[i++] = '0' + r;
+        val = q;
+    }
     while (i > 0) uart_putc(buf[--i]);
 }
 
