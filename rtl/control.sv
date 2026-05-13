@@ -110,6 +110,7 @@ module control (
       OP_AUIPC: begin
         reg_write = 1;
         auipc = 1;
+        alu_src = 1;
         imm_type = IMM_U;
       end
 
