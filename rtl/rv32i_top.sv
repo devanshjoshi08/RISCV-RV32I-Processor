@@ -110,6 +110,7 @@ module rv32i_top (
         .opcode    (opcode),
         .funct3    (funct3),
         .funct7    (funct7),
+        .funct12   (instr[31:20]),
         .reg_write (reg_write),
         .mem_read  (mem_read),
         .mem_write (mem_write),
@@ -121,7 +122,15 @@ module rv32i_top (
         .lui       (lui),
         .auipc     (auipc),
         .imm_type  (imm_type),
-        .alu_op    (alu_op)
+        .alu_op    (alu_op),
+        .is_mext   (),
+        .mdu_op    (),
+        .csr_op    (),
+        .csr_zimm  (),
+        .is_ecall  (),
+        .is_ebreak (),
+        .is_mret   (),
+        .illegal_instr ()
     );
 
     // Immediate Generator
