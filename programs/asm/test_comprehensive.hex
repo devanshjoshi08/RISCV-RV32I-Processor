@@ -1,0 +1,251 @@
+// test_comprehensive.hex - Comprehensive RV32IM + CSR + Trap test
+// One 32-bit word per line. Word 0 at address 0x00, word 1 at 0x04, etc.
+// Loaded with $readmemh into instruction memory.
+//
+// Expected results (registers checked by testbench):
+//   x10 = 0x0000005B (91, MUL 7*13)
+//   x11 = 0xFFFFFFFF (MULH: upper(-2 * 0x7FFFFFFF))
+//   x12 = 0xFFFFFFFF (MULHSU: upper(-2 signed * 3 unsigned))
+//   x13 = 0x00000000 (MULHU: upper(3 * 5) = 0)
+//   x14 = 0x0000000D (13, DIV 91/7)
+//   x15 = 0x00000000 (REM 91%7)
+//   x16 = 0xFFFFFFFF (DIVU: 0xFFFFFFFF / 1)
+//   x17 = 0x00000000 (REMU: 0xFFFFFFFF % 1)
+//   x18 = 0xFFFFFFFF (DIV by zero -> -1)
+//   x19 = 0x00000007 (REM by zero -> dividend=7)
+//   x20 = 0x80000000 (DIV overflow: MIN_INT/-1)
+//   x21 = 0x00000000 (REM overflow: MIN_INT%-1)
+//   x22 = nonzero   (mcycle)
+//   x23 = nonzero   (minstret)
+//   x24 = 0xDEADBEEF (mscratch readback after CSRRW)
+//   x25 = 0xDEADBEEF (CSRRS old value before set)
+//   x26 = 0xDEADBEFF (CSRRC old value before clear; mscratch was 0xDEADBEFF)
+//   x27 = 0x0000001F (CSRRSI read of mscratch after CSRRWI wrote 31)
+//   x28 = 0x0000001F (CSRRCI old value before clear bit 3)
+//   x29 = 0x00000017 (mscratch after CSRRCI cleared bit 3: 0x1F & ~0x08)
+//   x30 = 0x000000AB (trap handler flag)
+//   x31 = 0x0000000B (mcause = 11 from ecall)
+
+// multiply
+// Word  0 [0x00]: addi x1, x0, 7
+// Encoding: imm[11:0]=000000000111 | rs1=00000 | funct3=000 | rd=00001 | opcode=0010011
+// Binary: 0000_0000_0111_0000_0000_0000_1001_0011 = 0x00700093
+00700093
+// Word  1 [0x04]: addi x2, x0, 13
+// Encoding: imm=000000001101 | rs1=00000 | f3=000 | rd=00010 | op=0010011
+// Binary: 0000_0000_1101_0000_0000_0001_0001_0011 = 0x00D00113
+00D00113
+// Word  2 [0x08]: mul x10, x1, x2
+// Encoding: f7=0000001 | rs2=00010 | rs1=00001 | f3=000 | rd=01010 | op=0110011
+// Binary: 0000_001_0_0010_0000_1000_0101_0011_0011 = 0x02208533
+02208533
+// Word  3 [0x0C]: addi x3, x0, -2
+// Encoding: imm=111111111110 | rs1=00000 | f3=000 | rd=00011 | op=0010011
+// Binary: 1111_1111_1110_0000_0000_0001_1001_0011 = 0xFFE00193
+FFE00193
+// Word  4 [0x10]: lui x4, 0x80000
+// Encoding: imm[31:12]=10000000000000000000 | rd=00100 | op=0110111
+// Binary: 1000_0000_0000_0000_0000_0010_0011_0111 = 0x80000237
+80000237
+// Word  5 [0x14]: addi x4, x4, -1
+// Encoding: imm=111111111111 | rs1=00100 | f3=000 | rd=00100 | op=0010011
+// Binary: 1111_1111_1111_0010_0000_0010_0001_0011 = 0xFFF20213
+FFF20213
+// Word  6 [0x18]: mulh x11, x3, x4
+// Encoding: f7=0000001 | rs2=00100 | rs1=00011 | f3=001 | rd=01011 | op=0110011
+// Binary: 0000_001_0_0100_0001_1001_0101_1011_0011 = 0x024195B3
+024195B3
+// Word  7 [0x1C]: addi x5, x0, 3
+// Encoding: imm=000000000011 | rs1=00000 | f3=000 | rd=00101 | op=0010011
+// Binary: 0000_0000_0011_0000_0000_0010_1001_0011 = 0x00300293
+00300293
+// Word  8 [0x20]: mulhsu x12, x3, x5
+// Encoding: f7=0000001 | rs2=00101 | rs1=00011 | f3=010 | rd=01100 | op=0110011
+// Binary: 0000_001_0_0101_0001_1010_0110_0011_0011 = 0x0251A633
+0251A633
+// Word  9 [0x24]: addi x6, x0, 5
+// Encoding: imm=000000000101 | rs1=00000 | f3=000 | rd=00110 | op=0010011
+// Binary: 0000_0000_0101_0000_0000_0011_0001_0011 = 0x00500313
+00500313
+// Word 10 [0x28]: mulhu x13, x5, x6
+// Encoding: f7=0000001 | rs2=00110 | rs1=00101 | f3=011 | rd=01101 | op=0110011
+// Binary: 0000_001_0_0110_0010_1011_0110_1011_0011 = 0x0262B6B3
+0262B6B3
+
+// divide
+// Word 11 [0x2C]: addi x7, x0, 91
+// Encoding: imm=000001011011 | rs1=00000 | f3=000 | rd=00111 | op=0010011
+// Binary: 0000_0101_1011_0000_0000_0011_1001_0011 = 0x05B00393
+05B00393
+// Word 12 [0x30]: div x14, x7, x1
+// Encoding: f7=0000001 | rs2=00001 | rs1=00111 | f3=100 | rd=01110 | op=0110011
+// Binary: 0000_001_0_0001_0011_1100_0111_0011_0011 = 0x0213C733
+0213C733
+// Word 13 [0x34]: rem x15, x7, x1
+// Encoding: f7=0000001 | rs2=00001 | rs1=00111 | f3=110 | rd=01111 | op=0110011
+// Binary: 0000_001_0_0001_0011_1110_0111_1011_0011 = 0x0213E7B3
+0213E7B3
+// Word 14 [0x38]: addi x8, x0, -1
+// Encoding: imm=111111111111 | rs1=00000 | f3=000 | rd=01000 | op=0010011
+// Binary: 1111_1111_1111_0000_0000_0100_0001_0011 = 0xFFF00413
+FFF00413
+// Word 15 [0x3C]: addi x9, x0, 1
+// Encoding: imm=000000000001 | rs1=00000 | f3=000 | rd=01001 | op=0010011
+// Binary: 0000_0000_0001_0000_0000_0100_1001_0011 = 0x00100493
+00100493
+// Word 16 [0x40]: divu x16, x8, x9
+// Encoding: f7=0000001 | rs2=01001 | rs1=01000 | f3=101 | rd=10000 | op=0110011
+// Binary: 0000_001_0_1001_0100_0101_1000_0011_0011 = 0x02945833
+02945833
+// Word 17 [0x44]: remu x17, x8, x9
+// Encoding: f7=0000001 | rs2=01001 | rs1=01000 | f3=111 | rd=10001 | op=0110011
+// Binary: 0000_001_0_1001_0100_0111_1000_1011_0011 = 0x029478B3
+029478B3
+// Word 18 [0x48]: div x18, x1, x0   (divide by zero: x1=7, x0=0 -> result=-1)
+// Encoding: f7=0000001 | rs2=00000 | rs1=00001 | f3=100 | rd=10010 | op=0110011
+// Binary: 0000_001_0_0000_0000_1100_1001_0011_0011 = 0x0200C933
+0200C933
+// Word 19 [0x4C]: rem x19, x1, x0   (rem by zero: x1=7, x0=0 -> result=7)
+// Encoding: f7=0000001 | rs2=00000 | rs1=00001 | f3=110 | rd=10011 | op=0110011
+// Binary: 0000_001_0_0000_0000_1110_1001_1011_0011 = 0x0200E9B3
+0200E9B3
+// Word 20 [0x50]: lui x1, 0x80000   (x1 = 0x80000000 = MIN_INT)
+// Encoding: imm[31:12]=10000000000000000000 | rd=00001 | op=0110111
+// Binary: 1000_0000_0000_0000_0000_0000_1011_0111 = 0x800000B7
+800000B7
+// Word 21 [0x54]: addi x2, x0, -1   (x2 = -1)
+// Encoding: imm=111111111111 | rs1=00000 | f3=000 | rd=00010 | op=0010011
+// Binary: 1111_1111_1111_0000_0000_0001_0001_0011 = 0xFFF00113
+FFF00113
+// Word 22 [0x58]: div x20, x1, x2   (MIN_INT / -1 = MIN_INT, overflow)
+// Encoding: f7=0000001 | rs2=00010 | rs1=00001 | f3=100 | rd=10100 | op=0110011
+// Binary: 0000_001_0_0010_0000_1100_1010_0011_0011 = 0x0220CA33
+0220CA33
+// Word 23 [0x5C]: rem x21, x1, x2   (MIN_INT % -1 = 0, overflow)
+// Encoding: f7=0000001 | rs2=00010 | rs1=00001 | f3=110 | rd=10101 | op=0110011
+// Binary: 0000_001_0_0010_0000_1110_1010_1011_0011 = 0x0220EAB3
+0220EAB3
+
+// CSR ops
+// Word 24 [0x60]: csrrs x22, mcycle, x0   (read mcycle into x22)
+// CSR=0xB00=101100000000 | rs1=00000 | f3=010 | rd=10110 | op=1110011
+// Binary: 1011_0000_0000_0000_0010_1011_0111_0011 = 0xB0002B73
+B0002B73
+// Word 25 [0x64]: csrrs x23, minstret, x0 (read minstret into x23)
+// CSR=0xB02=101100000010 | rs1=00000 | f3=010 | rd=10111 | op=1110011
+// Binary: 1011_0000_0010_0000_0010_1011_1111_0011 = 0xB0202BF3
+B0202BF3
+// Word 26 [0x68]: lui x1, 0xDEADC    (x1 = 0xDEADC000)
+// Encoding: imm[31:12]=11011110101011011100 | rd=00001 | op=0110111
+// Binary: 1101_1110_1010_1101_1100_0000_1011_0111 = 0xDEADC0B7
+DEADC0B7
+// Word 27 [0x6C]: addi x1, x1, -273  (x1 = 0xDEADC000 + (-273) = 0xDEADC000 + 0xFFFFFEEF = 0xDEADBEEF)
+// imm = -273 = 0xEEF in 12-bit twos complement
+// Encoding: imm=111011101111 | rs1=00001 | f3=000 | rd=00001 | op=0010011
+// Binary: 1110_1110_1111_0000_1000_0000_1001_0011 = 0xEEF08093
+EEF08093
+// Word 28 [0x70]: csrrw x0, mscratch, x1  (write x1=0xDEADBEEF to mscratch)
+// CSR=0x340=001101000000 | rs1=00001 | f3=001 | rd=00000 | op=1110011
+// Binary: 0011_0100_0000_0000_1001_0000_0111_0011 = 0x34009073
+34009073
+// Word 29 [0x74]: csrrs x24, mscratch, x0 (read mscratch into x24, x24=0xDEADBEEF)
+// CSR=0x340=001101000000 | rs1=00000 | f3=010 | rd=11000 | op=1110011
+// Binary: 0011_0100_0000_0000_0010_1100_0111_0011 = 0x34002C73
+34002C73
+// Word 30 [0x78]: addi x2, x0, 16    (x2 = 0x10)
+// Encoding: imm=000000010000 | rs1=00000 | f3=000 | rd=00010 | op=0010011
+// Binary: 0000_0001_0000_0000_0000_0001_0001_0011 = 0x01000113
+01000113
+// Word 31 [0x7C]: csrrs x25, mscratch, x2 (x25=old mscratch=0xDEADBEEF, set bit4)
+// CSR=0x340=001101000000 | rs1=00010 | f3=010 | rd=11001 | op=1110011
+// Binary: 0011_0100_0000_0001_0010_1100_1111_0011 = 0x34012CF3
+34012CF3
+// Word 32 [0x80]: addi x3, x0, 4     (x3 = 4)
+// Encoding: imm=000000000100 | rs1=00000 | f3=000 | rd=00011 | op=0010011
+// Binary: 0000_0000_0100_0000_0000_0001_1001_0011 = 0x00400193
+00400193
+// Word 33 [0x84]: csrrc x26, mscratch, x3 (x26=old=0xDEADBEFF, clear bit2)
+// CSR=0x340=001101000000 | rs1=00011 | f3=011 | rd=11010 | op=1110011
+// Binary: 0011_0100_0000_0001_1011_1101_0111_0011 = 0x3401BD73
+3401BD73
+// Word 34 [0x88]: csrrwi x0, mscratch, 31 (write zimm=31=0x1F to mscratch)
+// CSR=0x340=001101000000 | zimm=11111 | f3=101 | rd=00000 | op=1110011
+// Binary: 0011_0100_0000_1111_1101_0000_0111_0011 = 0x340FD073
+340FD073
+// Word 35 [0x8C]: csrrsi x27, mscratch, 0 (read mscratch=0x1F into x27, set nothing)
+// CSR=0x340=001101000000 | zimm=00000 | f3=110 | rd=11011 | op=1110011
+// Binary: 0011_0100_0000_0000_0110_1101_1111_0011 = 0x34006DF3
+34006DF3
+// Word 36 [0x90]: csrrci x28, mscratch, 8 (x28=old=0x1F, clear bit3 -> mscratch=0x17)
+// CSR=0x340=001101000000 | zimm=01000 | f3=111 | rd=11100 | op=1110011
+// Binary: 0011_0100_0000_0100_0111_1110_0111_0011 = 0x34047E73
+34047E73
+// Word 37 [0x94]: csrrs x29, mscratch, x0 (read mscratch=0x17 into x29)
+// CSR=0x340=001101000000 | rs1=00000 | f3=010 | rd=11101 | op=1110011
+// Binary: 0011_0100_0000_0000_0010_1110_1111_0011 = 0x34002EF3
+34002EF3
+
+// trap setup
+// Word 38 [0x98]: addi x1, x0, 192   (trap handler addr = 0xC0 = 192)
+// Encoding: imm=000011000000 | rs1=00000 | f3=000 | rd=00001 | op=0010011
+// Binary: 0000_1100_0000_0000_0000_0000_1001_0011 = 0x0C000093
+0C000093
+// Word 39 [0x9C]: csrrw x0, mtvec, x1    (set mtvec = 192 = 0xC0)
+// CSR=0x305=001100000101 | rs1=00001 | f3=001 | rd=00000 | op=1110011
+// Binary: 0011_0000_0101_0000_1001_0000_0111_0011 = 0x30509073
+30509073
+// Word 40 [0xA0]: ecall               (triggers trap, mepc=0xA0, mcause=11)
+// Encoding: 000000000000_00000_000_00000_1110011 = 0x00000073
+00000073
+
+// hazard test (reached after mret)
+// Word 41 [0xA4]: addi x1, x0, 6
+// Binary: 0000_0000_0110_0000_0000_0000_1001_0011 = 0x00600093
+00600093
+// Word 42 [0xA8]: addi x2, x0, 7
+// Binary: 0000_0000_0111_0000_0000_0001_0001_0011 = 0x00700113
+00700113
+// Word 43 [0xAC]: mul x3, x1, x2     (x3 = 6*7 = 42)
+// f7=0000001 | rs2=00010 | rs1=00001 | f3=000 | rd=00011 | op=0110011
+// Binary: 0000_001_0_0010_0000_1000_0001_1011_0011 = 0x022081B3
+022081B3
+// Word 44 [0xB0]: add x4, x3, x1     (x4 = 42+6 = 48, tests forwarding from mul)
+// f7=0000000 | rs2=00001 | rs1=00011 | f3=000 | rd=00100 | op=0110011
+// Binary: 0000_000_0_0001_0001_1000_0010_0011_0011 = 0x00118233
+00118233
+
+// halt
+// Word 45 [0xB4]: jal x0, 0          (infinite loop: jump to self)
+// JAL: imm[20|10:1|11|19:12] | rd | opcode
+// offset=0: imm[20]=0, imm[10:1]=0000000000, imm[11]=0, imm[19:12]=00000000
+// Binary: 0_0000000000_0_00000000_00000_1101111 = 0x0000006F
+0000006F
+// Word 46 [0xB8]: nop
+00000013
+// Word 47 [0xBC]: nop
+00000013
+
+// trap handler (word 48 = 0xC0)
+// Word 48 [0xC0]: csrrs x31, mcause, x0   (read mcause into x31)
+// CSR=0x342=001101000010 | rs1=00000 | f3=010 | rd=11111 | op=1110011
+// Binary: 0011_0100_0010_0000_0010_1111_1111_0011 = 0x34202FF3
+34202FF3
+// Word 49 [0xC4]: addi x30, x0, 0xAB  (set trap-reached flag)
+// Encoding: imm=000010101011 | rs1=00000 | f3=000 | rd=11110 | op=0010011
+// Binary: 0000_1010_1011_0000_0000_1111_0001_0011 = 0x0AB00F13
+0AB00F13
+// Word 50 [0xC8]: csrrs x1, mepc, x0  (read mepc into x1)
+// CSR=0x341=001101000001 | rs1=00000 | f3=010 | rd=00001 | op=1110011
+// Binary: 0011_0100_0001_0000_0010_0000_1111_0011 = 0x341020F3
+341020F3
+// Word 51 [0xCC]: addi x1, x1, 4      (advance past ecall)
+// Encoding: imm=000000000100 | rs1=00001 | f3=000 | rd=00001 | op=0010011
+// Binary: 0000_0000_0100_0000_1000_0000_1001_0011 = 0x00408093
+00408093
+// Word 52 [0xD0]: csrrw x0, mepc, x1  (write mepc = ecall_addr + 4)
+// CSR=0x341=001101000001 | rs1=00001 | f3=001 | rd=00000 | op=1110011
+// Binary: 0011_0100_0001_0000_1001_0000_0111_0011 = 0x34109073
+34109073
+// Word 53 [0xD4]: mret                 (return from trap)
+// Encoding: 0011_0000_0010_0000_0000_0000_0111_0011 = 0x30200073
+30200073
