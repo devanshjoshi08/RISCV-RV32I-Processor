@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 520" font-family="Consolas, monospace">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#333"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#16a34a"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect width="1100" height="520" fill="#fafafa" rx="8"/>
+
+  <!-- title -->
+  <text x="550" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#111">6-Stage RV32IM Pipeline with Forwarding Paths</text>
+
+  <!-- pipeline stages -->
+  <rect x="30" y="60" width="140" height="160" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="100" y="82" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e40af">IF</text>
+  <text x="100" y="102" text-anchor="middle" font-size="10" fill="#374151">PC</text>
+  <text x="100" y="116" text-anchor="middle" font-size="10" fill="#374151">I-Cache</text>
+  <text x="100" y="130" text-anchor="middle" font-size="10" fill="#374151">Gshare PHT</text>
+  <text x="100" y="144" text-anchor="middle" font-size="10" fill="#374151">BTB</text>
+  <text x="100" y="158" text-anchor="middle" font-size="10" fill="#374151">RAS</text>
+
+  <rect x="200" y="60" width="140" height="160" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="270" y="82" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e40af">ID</text>
+  <text x="270" y="102" text-anchor="middle" font-size="10" fill="#374151">Decoder</text>
+  <text x="270" y="116" text-anchor="middle" font-size="10" fill="#374151">Imm Gen</text>
+  <text x="270" y="130" text-anchor="middle" font-size="10" fill="#374151">Reg File Read</text>
+  <text x="270" y="144" text-anchor="middle" font-size="10" fill="#374151">RAS Push</text>
+
+  <rect x="370" y="60" width="140" height="160" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="440" y="82" text-anchor="middle" font-size="13" font-weight="bold" fill="#92400e">EX1</text>
+  <text x="440" y="102" text-anchor="middle" font-size="10" fill="#374151">Fwd Mux (3-src)</text>
+  <text x="440" y="116" text-anchor="middle" font-size="10" fill="#374151">Operand Select</text>
+  <text x="440" y="130" text-anchor="middle" font-size="10" fill="#374151">CSR Wdata Prep</text>
+  <text x="440" y="144" text-anchor="middle" font-size="10" fill="#374151">Fresh RF Read</text>
+
+  <rect x="540" y="60" width="140" height="160" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+  <text x="610" y="82" text-anchor="middle" font-size="13" font-weight="bold" fill="#92400e">EX2</text>
+  <text x="610" y="102" text-anchor="middle" font-size="10" fill="#374151">ALU</text>
+  <text x="610" y="116" text-anchor="middle" font-size="10" fill="#374151">Branch Unit</text>
+  <text x="610" y="130" text-anchor="middle" font-size="10" fill="#374151">MDU (mul/div)</text>
+  <text x="610" y="144" text-anchor="middle" font-size="10" fill="#374151">CSR Unit</text>
+  <text x="610" y="158" text-anchor="middle" font-size="10" fill="#374151">Trap Detect</text>
+
+  <rect x="710" y="60" width="140" height="160" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="780" y="82" text-anchor="middle" font-size="13" font-weight="bold" fill="#166534">MEM</text>
+  <text x="780" y="102" text-anchor="middle" font-size="10" fill="#374151">MMIO Controller</text>
+  <text x="780" y="116" text-anchor="middle" font-size="10" fill="#374151">Data RAM</text>
+  <text x="780" y="130" text-anchor="middle" font-size="10" fill="#374151">UART / LEDs</text>
+
+  <rect x="880" y="60" width="140" height="160" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="950" y="82" text-anchor="middle" font-size="13" font-weight="bold" fill="#166534">WB</text>
+  <text x="950" y="102" text-anchor="middle" font-size="10" fill="#374151">Result Mux</text>
+  <text x="950" y="116" text-anchor="middle" font-size="10" fill="#374151">Reg File Write</text>
+  <text x="950" y="130" text-anchor="middle" font-size="10" fill="#374151">Write-through</text>
+  <text x="950" y="144" text-anchor="middle" font-size="10" fill="#374151">Bypass</text>
+
+  <!-- pipeline register labels -->
+  <text x="185" y="235" text-anchor="middle" font-size="9" fill="#6b7280">IF/ID</text>
+  <text x="355" y="235" text-anchor="middle" font-size="9" fill="#6b7280">ID/EX1</text>
+  <text x="525" y="235" text-anchor="middle" font-size="9" fill="#6b7280">EX1/EX2</text>
+  <text x="695" y="235" text-anchor="middle" font-size="9" fill="#6b7280">EX2/MEM</text>
+  <text x="865" y="235" text-anchor="middle" font-size="9" fill="#6b7280">MEM/WB</text>
+
+  <!-- main pipeline flow arrows -->
+  <line x1="170" y1="140" x2="200" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="340" y1="140" x2="370" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="510" y1="140" x2="540" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="680" y1="140" x2="710" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="850" y1="140" x2="880" y2="140" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- forwarding arrows -->
+  <!-- EX2 -> EX1 (1 ahead) -->
+  <path d="M 610 220 L 610 270 L 440 270 L 440 220" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow-red)"/>
+  <text x="525" y="264" text-anchor="middle" font-size="10" font-weight="bold" fill="#dc2626">EX2→EX1</text>
+  <text x="525" y="278" text-anchor="middle" font-size="9" fill="#dc2626">(1 ahead, gated by mdu_valid)</text>
+
+  <!-- MEM -> EX1 (2 ahead) -->
+  <path d="M 780 220 L 780 310 L 440 310 L 440 275" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow-blue)"/>
+  <text x="610" y="304" text-anchor="middle" font-size="10" font-weight="bold" fill="#2563eb">MEM→EX1</text>
+  <text x="610" y="318" text-anchor="middle" font-size="9" fill="#2563eb">(2 ahead, includes load data)</text>
+
+  <!-- WB -> EX1 (3 ahead) -->
+  <path d="M 950 220 L 950 350 L 440 350 L 440 315" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrow-green)"/>
+  <text x="695" y="344" text-anchor="middle" font-size="10" font-weight="bold" fill="#16a34a">WB→EX1</text>
+  <text x="695" y="358" text-anchor="middle" font-size="9" fill="#16a34a">(3 ahead, final result)</text>
+
+  <!-- WB -> ID write-through bypass -->
+  <path d="M 950 220 L 950 390 L 270 390 L 270 220" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+  <text x="610" y="384" text-anchor="middle" font-size="10" font-weight="bold" fill="#7c3aed">WB→ID write-through bypass</text>
+
+  <!-- hazard annotations -->
+  <rect x="30" y="420" width="1040" height="90" rx="6" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="50" y="442" font-size="11" font-weight="bold" fill="#111">Stall Conditions:</text>
+  <text x="50" y="460" font-size="10" fill="#374151">Load-use: EX2 has load, EX1 reads same register → stall 1 cycle, forward load data from MEM next cycle</text>
+  <text x="50" y="476" font-size="10" fill="#374151">MDU busy: multiply (2 cyc) or divide (33 cyc) in EX2 → stall IF/ID/EX1/EX2, bubble into MEM until valid</text>
+  <text x="50" y="492" font-size="10" fill="#374151">Mispredict / JAL / JALR / trap / MRET: flush IF + ID + EX1 (3-cycle penalty), redirect PC from EX2</text>
+</svg>

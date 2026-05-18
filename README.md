@@ -39,14 +39,7 @@ This reduced the critical path from 19 logic levels to 7, closing timing at 100 
 
 ## Pipeline Architecture
 
-```
-IF ──► ID ──► EX1 ──► EX2 ──► MEM ──► WB
-         │      ▲       │       │       │
-         │      │  forwarding   │       │
-         │      └───────┴───────┘       │
-         │           register file      │
-         └──────────write-through───────┘
-```
+![6-Stage Pipeline Diagram](docs/pipeline.svg)
 
 ### IF (Instruction Fetch)
 
