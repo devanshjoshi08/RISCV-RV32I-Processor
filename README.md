@@ -37,6 +37,19 @@ To fix this, I split the execute stage into two stages, similar to the approach 
 
 This reduced the critical path from 19 logic levels to 7, closing timing at 100 MHz with +0.135 ns of slack. The tradeoff is that mispredictions now flush 3 stages instead of 2, adding one cycle of branch latency. But a pipelined processor's performance is determined by throughput, not single-instruction latency. Throughput = IPC × frequency, and the 56% frequency gain (64 → 101 MHz) far exceeds the minor IPC reduction from the occasional extra flush cycle. The gshare predictor with BTB and RAS further minimizes the IPC impact by predicting both direction and target in the fetch stage, so the deeper pipeline rarely pays the full 3-cycle penalty in practice.
 
+The simulation numbers from the comprehensive test suite (which includes 8 multi-cycle divides at 33 cycles each, making it a worst-case workload for IPC) confirm this:
+
+| Metric | 5-stage @ 64 MHz | 6-stage @ 101 MHz |
+|--------|------------------|-------------------|
+| Frequency | 64.3 MHz | 101.4 MHz |
+| Cycles (comprehensive test) | 329 | 342 |
+| Instructions retired | 99 | 87 |
+| IPC (measured, divide-heavy) | 0.30 | 0.25 |
+| Throughput (MIPS) | 19.3 | 25.4 |
+| **Throughput improvement** | — | **+31%** |
+
+The IPC dropped from 0.30 to 0.25 (17%) due to the deeper pipeline and additional stall cycles around multi-cycle operations, but the frequency increased by 56%, yielding a net throughput gain of 31% even on a divide-heavy workload. On integer-only code without divides, the IPC difference between the two designs is much smaller (the extra pipeline stage only costs cycles on mispredictions and load-use hazards), and the throughput advantage of the 6-stage design would be closer to the full 56%.
+
 ## Pipeline Architecture
 
 ![6-Stage Pipeline Diagram](docs/pipeline.svg)
