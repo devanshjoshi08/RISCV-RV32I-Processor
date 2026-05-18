@@ -10,15 +10,15 @@
 #   make fibonacci        # compile fibonacci.c to fibonacci.hex
 #   make all              # compile both
 
-PREFIX = riscv32-unknown-elf
+PREFIX = riscv-none-elf
 CC     = $(PREFIX)-gcc
 OBJCOPY = $(PREFIX)-objcopy
 OBJDUMP = $(PREFIX)-objdump
 
-CFLAGS  = -march=rv32i -mabi=ilp32 -Os -nostdlib -nostartfiles -ffreestanding
+CFLAGS  = -march=rv32im_zicsr -mabi=ilp32 -Os -nostdlib -nostartfiles -ffreestanding
 LDFLAGS = -T link.ld -Wl,--no-relax
 
-PROGRAMS = bubble_sort fibonacci
+PROGRAMS = bubble_sort fibonacci perf_report
 
 all: $(addsuffix .hex, $(PROGRAMS))
 
